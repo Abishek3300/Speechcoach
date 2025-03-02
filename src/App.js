@@ -4,19 +4,36 @@ function App() {
   const [file, setFile] = useState(null);
   const [transcript, setTranscript] = useState("");
   const [analysis, setAnalysis] = useState(null);
+  const [jobName, setJobName] = useState(""); // Store job name
+
+  const API_BASE = "https://zcw6gt8i7g.execute-api.us-east-1.amazonaws.com";
 
   const uploadAudio = async () => {
+    if (!file) {
+      alert("Please select a file to upload.");
+      return;
+    }
+
     const formData = new FormData();
     formData.append("file", file);
     formData.append("user_id", "user123");
 
-    const response = await fetch("https://zcw6gt8i7g.execute-api.us-east-1.amazonaws.com/", {
-      method: "POST",
-      body: formData,
-    });
+    try {
+      const response = await fetch(`${API_BASE}/rapid-fire/`, {
+        method: "POST",
+        body: formData,
+      });
 
-    const data = await response.json();
-    checkTranscriptionStatus(data.job_name);
+      const data = await response.json();
+      if (data.job_name) {
+        setJobName(data.job_name);
+        checkTranscriptionStatus(data.job_name);
+      } else {
+        console.error("Job name not returned:", data);
+      }
+    } catch (error) {
+      console.error("Upload error:", error);
+    }
   };
 
   const checkTranscriptionStatus = async (jobName) => {
@@ -24,28 +41,41 @@ function App() {
     let transcriptUrl = "";
 
     while (status === "IN_PROGRESS") {
-      const response = await fetch(
-        `https://zcw6gt8i7g.execute-api.us-east-1.amazonaws.com/transcription-status/?job_name=${jobName}`
-      );
-      const data = await response.json();
-      status = data.status;
+      try {
+        const response = await fetch(
+          `${API_BASE}/transcription-status/?job_name=${jobName}`
+        );
+        const data = await response.json();
+        status = data.status;
 
-      if (status === "COMPLETED") {
-        transcriptUrl = data.transcript_url;
-        analyzeTranscript(transcriptUrl);
+        if (status === "COMPLETED") {
+          transcriptUrl = data.transcript_url;
+          analyzeTranscript(transcriptUrl);
+          break;
+        } else if (status === "FAILED") {
+          console.error("Transcription failed:", data.error);
+          break;
+        }
+      } catch (error) {
+        console.error("Status check error:", error);
+        break;
       }
 
-      await new Promise((resolve) => setTimeout(resolve, 5000));
+      await new Promise((resolve) => setTimeout(resolve, 5000)); // Wait 5 sec before retrying
     }
   };
 
   const analyzeTranscript = async (transcriptUrl) => {
-    const response = await fetch(
-      `https://zcw6gt8i7g.execute-api.us-east-1.amazonaws.com/analyze-transcript/?transcript_url=${transcriptUrl}&time_taken=4.5`
-    );
-    const data = await response.json();
-    setTranscript(data.transcript);
-    setAnalysis(data);
+    try {
+      const response = await fetch(
+        `${API_BASE}/analyze-transcript/?transcript_url=${transcriptUrl}&time_taken=4.5`
+      );
+      const data = await response.json();
+      setTranscript(data.transcript);
+      setAnalysis(data);
+    } catch (error) {
+      console.error("Analysis error:", error);
+    }
   };
 
   return (
