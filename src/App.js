@@ -10,7 +10,7 @@ function App() {
     formData.append("file", file);
     formData.append("user_id", "user123");
 
-    const response = await fetch("http://your-ec2-ip:8000/rapid-fire/", {
+    const response = await fetch("https://zcw6gt8i7g.execute-api.us-east-1.amazonaws.com/rapid-fire/", {
       method: "POST",
       body: formData,
     });
