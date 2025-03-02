@@ -10,7 +10,7 @@ function App() {
     formData.append("file", file);
     formData.append("user_id", "user123");
 
-    const response = await fetch("https://zcw6gt8i7g.execute-api.us-east-1.amazonaws.com/rapid-fire/", {
+    const response = await fetch("https://zcw6gt8i7g.execute-api.us-east-1.amazonaws.com/", {
       method: "POST",
       body: formData,
     });
@@ -25,7 +25,7 @@ function App() {
 
     while (status === "IN_PROGRESS") {
       const response = await fetch(
-        `http://your-ec2-ip:8000/transcription-status/?job_name=${jobName}`
+        `https://zcw6gt8i7g.execute-api.us-east-1.amazonaws.com/transcription-status/?job_name=${jobName}`
       );
       const data = await response.json();
       status = data.status;
@@ -41,7 +41,7 @@ function App() {
 
   const analyzeTranscript = async (transcriptUrl) => {
     const response = await fetch(
-      `http://your-ec2-ip:8000/analyze-transcript/?transcript_url=${transcriptUrl}&time_taken=4.5`
+      `https://zcw6gt8i7g.execute-api.us-east-1.amazonaws.com/analyze-transcript/?transcript_url=${transcriptUrl}&time_taken=4.5`
     );
     const data = await response.json();
     setTranscript(data.transcript);
